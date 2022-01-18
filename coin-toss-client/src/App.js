@@ -224,17 +224,19 @@ const App = () => {
           />,
         ]}
 
-        {currentAccount && [
-          <button className="tossButton" onClick={() => toss(true)}>
-            Heads 🧐
-          </button>,
-          <button className="tossButton" onClick={() => toss(false)}>
-            Tails 😬
-          </button>,
-          <div className="bio">Recent tosses:</div>,
-        ]}
+        {currentAccount &&
+          !tossing && [
+            <button className="tossButton" onClick={() => toss(true)}>
+              Heads 🧐
+            </button>,
+            <button className="tossButton" onClick={() => toss(false)}>
+              Tails 😬
+            </button>,
+          ]}
 
         {tossing && <p>tossing...</p>}
+
+        {currentAccount && <div className="bio">Recent tosses:</div>}
 
         {allTosses.slice(0, 20).map((toss, index) => {
           const tossMessage = `${toss.address} ${toss.result ? `📈` : `📉`} ${

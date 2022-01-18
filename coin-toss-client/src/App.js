@@ -127,7 +127,6 @@ const App = () => {
         const tosses = await coinTossContract.getAllTosses();
 
         const balance = await provider.getBalance(contractAddress);
-        console.log(balance);
         setContractBalance(ethers.utils.formatEther(balance));
 
         const tossesCleaned = tosses
@@ -198,47 +197,47 @@ const App = () => {
   return (
     <div className="mainContainer">
       <div className="dataContainer">
+        <div className="header">🦄</div>
         <div className="header">Toss a coin</div>
 
-        <div className="bio">
-          <b>Contract balance: {contractBalance} ETH</b>
-        </div>
+        <div className="bio">Win or lose 🤷‍♀️!</div>
 
-        <div className="bio">Win or lose money!</div>
-        {!currentAccount && (
+        {!currentAccount && [
           <button className="tossButton" onClick={connectWallet}>
             Connect Wallet
-          </button>
-        )}
+          </button>,
+        ]}
 
         {currentAccount && [
-          <div className="bio">Wager:</div>,
+          <div className="bio">
+            <b>Toss bank balance 👀: {contractBalance} ETH</b>
+          </div>,
+          <div className="bio">Wager 💰⬇️</div>,
           <input
             type="number"
             value={wager}
             label="wager"
             min="1"
             max="10"
+            className="wager"
             onChange={(e) => setWager(e.target.value)}
           />,
         ]}
 
         {currentAccount && [
           <button className="tossButton" onClick={() => toss(true)}>
-            Heads
+            Heads 🧐
           </button>,
           <button className="tossButton" onClick={() => toss(false)}>
-            Tails
+            Tails 😬
           </button>,
           <div className="bio">Recent tosses:</div>,
         ]}
 
         {tossing && <p>tossing...</p>}
 
-        {allTosses.map((toss, index) => {
-          const tossMessage = `${toss.address} ${
-            toss.result ? "won" : "lost"
-          } ${
+        {allTosses.slice(0, 20).map((toss, index) => {
+          const tossMessage = `${toss.address} ${toss.result ? `📈` : `📉`} ${
             toss.result
               ? ethers.utils.formatEther(toss.wager) * 2
               : ethers.utils.formatEther(toss.wager)

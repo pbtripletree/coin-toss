@@ -6,7 +6,7 @@ import abi from "./utils/CoinToss.json";
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState("");
 
-  const [tossing, setTossing] = useState(false)
+  const [tossing, setTossing] = useState(false);
 
   const [allTosses, setAllTosses] = useState([]);
 
@@ -14,7 +14,7 @@ const App = () => {
 
   const [contractBalance, setContractBalance] = useState(0);
 
-  const contractAddress = "0xb0220314B172B9395C57894b9154B651BB298918";
+  const contractAddress = "0xCb5A2201Ec862d745B88397edA1AB294D9b97294";
 
   const contractABI = abi.abi;
 
@@ -90,20 +90,20 @@ const App = () => {
          * Execute the actual wave from your smart contract
          */
         const tossTxn = await coinTossContract.toss(side, {
-          value: ethers.utils.parseUnits(`${wager}`, 'ether').toHexString(),
+          value: ethers.utils.parseUnits(`${wager}`, "ether").toHexString(),
           gasLimit: 300000,
         });
-        setTossing(true)
+        setTossing(true);
 
         const message = await tossTxn.wait();
 
         console.log(message);
 
-        setTossing(false)
+        setTossing(false);
 
         const balance = await provider.getBalance(contractAddress);
 
-        setContractBalance(ethers.utils.formatEther(balance))
+        setContractBalance(ethers.utils.formatEther(balance));
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -128,7 +128,7 @@ const App = () => {
 
         const balance = await provider.getBalance(contractAddress);
         console.log(balance);
-        setContractBalance(ethers.utils.formatEther(balance))
+        setContractBalance(ethers.utils.formatEther(balance));
 
         const tossesCleaned = tosses
           .map((toss) => {
@@ -136,12 +136,15 @@ const App = () => {
               address: toss.tosser,
               timestamp: new Date(toss.timestamp * 1000),
               wager: toss.wager,
-              result: toss.result
+              result: toss.result,
             };
           })
           .sort(function (a, b) {
             console.log(new Date(a.timestamp).getTime());
-            return new Date(a.timestamp).getTime() > new Date(a.timestamp).getTime() ? 1 : -1;
+            return new Date(a.timestamp).getTime() >
+              new Date(a.timestamp).getTime()
+              ? 1
+              : -1;
           });
 
         console.log(tossesCleaned);
@@ -167,10 +170,9 @@ const App = () => {
           address: from,
           timestamp: new Date(timestamp * 1000),
           wager: wager,
-          result: result
+          result: result,
         },
         ...prevState,
-
       ]);
     };
 
@@ -198,7 +200,9 @@ const App = () => {
       <div className="dataContainer">
         <div className="header">Toss a coin</div>
 
-        <div className="bio"><b>Contract balance: {contractBalance} ETH</b></div>
+        <div className="bio">
+          <b>Contract balance: {contractBalance} ETH</b>
+        </div>
 
         <div className="bio">Win or lose money!</div>
         {!currentAccount && (
@@ -207,36 +211,38 @@ const App = () => {
           </button>
         )}
 
-        {currentAccount && (
-          [
-            <div className="bio">Wager:</div>,
-            <input
-              type="number"
-              value={wager}
-              label="wager"
-              min="1"
-              max="10"
-              onChange={(e) => setWager(e.target.value)}
-            />
-          ]
-        )}
+        {currentAccount && [
+          <div className="bio">Wager:</div>,
+          <input
+            type="number"
+            value={wager}
+            label="wager"
+            min="1"
+            max="10"
+            onChange={(e) => setWager(e.target.value)}
+          />,
+        ]}
 
-        {currentAccount && (
-          [
-            <button className="tossButton" onClick={() => toss(true)}>
-              Heads
-            </button>,
-            <button className="tossButton" onClick={() => toss(false)}>
-              Tails
-            </button>,
-            <div className="bio">Recent tosses:</div>
-          ]
-        )}
+        {currentAccount && [
+          <button className="tossButton" onClick={() => toss(true)}>
+            Heads
+          </button>,
+          <button className="tossButton" onClick={() => toss(false)}>
+            Tails
+          </button>,
+          <div className="bio">Recent tosses:</div>,
+        ]}
 
-        {tossing && (<p>tossing...</p>)}
+        {tossing && <p>tossing...</p>}
 
         {allTosses.map((toss, index) => {
-          const tossMessage = `${toss.address} ${toss.result ? 'won' : 'lost'} ${toss.result ? (ethers.utils.formatEther(toss.wager)) * 2 : ethers.utils.formatEther(toss.wager)} ETH`
+          const tossMessage = `${toss.address} ${
+            toss.result ? "won" : "lost"
+          } ${
+            toss.result
+              ? ethers.utils.formatEther(toss.wager) * 2
+              : ethers.utils.formatEther(toss.wager)
+          } ETH`;
           return (
             <div
               key={index}

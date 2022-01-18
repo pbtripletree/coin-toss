@@ -40,8 +40,10 @@ contract CoinToss {
 
     function toss (bool guess) public payable returns (string memory) {
       uint256 prize = 2 * msg.value;
-      console.log(prize);
-      if (result == guess) {
+      bool won = result == guess;
+      result = rand() % 2 == 0 ? true : false;
+      console.log(result);
+      if (won) {
         require(
             prize <= address(this).balance,
             "Trying to withdraw more money than they contract has."

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import { ethers, utils } from "ethers";
 import abi from "./utils/CoinToss.json";
+import tokenABI from "./utils/TossToken.json";
 
 const App = () => {
   const [currentAccount, setCurrentAccount] = useState("");
@@ -14,9 +15,14 @@ const App = () => {
 
   const [contractBalance, setContractBalance] = useState(0);
 
-  const contractAddress = "0xCb5A2201Ec862d745B88397edA1AB294D9b97294";
+  const [userBalance, setUserBalance] = useState(0);
+
+  const contractAddress = "0x392C3118D6D442679250151f82b7c58E2890dffF";
+
+  const tokenContractAddress = "0x1b5dde59a16f86f7a7aa2f71a638c34c572a1965";
 
   const contractABI = abi.abi;
+  const tokenContractABI = tokenABI.abi;
 
   const checkIfWalletIsConnected = async () => {
     try {
@@ -41,6 +47,25 @@ const App = () => {
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const getUserBalance = async (tokenContract) => {
+    let balance;
+    if (currentAccount) {
+      balance = ethers.utils.formatEther(
+        await tokenContract.balanceOf(currentAccount)
+      );
+    } else {
+      const { ethereum } = window;
+      const accounts = await ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const userAccount = accounts[0];
+      balance = ethers.utils.formatEther(
+        await tokenContract.balanceOf(userAccount)
+      );
+    }
+    return Math.round(balance, 1);
   };
 
   /**
@@ -80,30 +105,35 @@ const App = () => {
           signer
         );
 
-        // await signer.sendTransaction({
-        //   to: contractAddress,
-        //   from: currentAccount,
-        //   value: ethers.utils.parseUnits(`${wager / 10}`, 'ether').toHexString()
-        // })
+        const tokenContract = new ethers.Contract(
+          tokenContractAddress,
+          tokenContractABI,
+          signer
+        );
 
-        /*
-         * Execute the actual wave from your smart contract
-         */
-        const tossTxn = await coinTossContract.toss(side, {
-          value: ethers.utils.parseUnits(`${wager}`, "ether").toHexString(),
-          gasLimit: 300000,
-        });
+        const approveTxn = await tokenContract.approve(
+          contractAddress,
+          ethers.utils.parseUnits(`${wager}`, "ether")
+        );
         setTossing(true);
+        await approveTxn.wait();
 
-        const message = await tossTxn.wait();
+        const tossTokenTxn = await coinTossContract.tossToken(
+          side,
+          ethers.utils.parseUnits(`${wager}`, "ether"),
+          tokenContractAddress,
+          { gasLimit: 300000 }
+        );
 
+        const message = await tossTokenTxn.wait();
         console.log(message);
 
         setTossing(false);
 
-        const balance = await provider.getBalance(contractAddress);
+        const balance = await tokenContract.balanceOf(contractAddress);
 
         setContractBalance(ethers.utils.formatEther(balance));
+        setUserBalance(await getUserBalance(tokenContract));
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -124,10 +154,20 @@ const App = () => {
           contractABI,
           signer
         );
+
+        const tokenContract = new ethers.Contract(
+          tokenContractAddress,
+          tokenContractABI,
+          signer
+        );
+
         const tosses = await coinTossContract.getAllTosses();
 
-        const balance = await provider.getBalance(contractAddress);
+        const balance = await tokenContract.balanceOf(contractAddress);
+
         setContractBalance(ethers.utils.formatEther(balance));
+
+        setUserBalance(await getUserBalance(tokenContract));
 
         const tossesCleaned = tosses
           .map((toss) => {
@@ -198,7 +238,7 @@ const App = () => {
     <div className="mainContainer">
       <div className="dataContainer">
         <div className="header">🦄</div>
-        <div className="header">Toss a coin</div>
+        <div className="header">Toss some $TOSS</div>
 
         <div className="bio">Win or lose 🤷‍♀️!</div>
 
@@ -210,7 +250,10 @@ const App = () => {
 
         {currentAccount && [
           <div className="bio">
-            <b>Toss bank balance 👀: {contractBalance} ETH</b>
+            <b>Toss contract balance 👀: {contractBalance} $TOSS</b>
+          </div>,
+          <div className="bio">
+            <b>Your balance 👍: {userBalance} $TOSS</b>
           </div>,
           <div className="bio">Wager 💰⬇️</div>,
           <input
@@ -241,9 +284,9 @@ const App = () => {
         {allTosses.slice(0, 20).map((toss, index) => {
           const tossMessage = `${toss.address} ${toss.result ? `📈` : `📉`} ${
             toss.result
-              ? ethers.utils.formatEther(toss.wager) * 2
-              : ethers.utils.formatEther(toss.wager)
-          } ETH`;
+              ? Math.round(ethers.utils.formatEther(toss.wager) * 2, 1)
+              : Math.round(ethers.utils.formatEther(toss.wager), 1)
+          } $TOSS`;
           return (
             <div
               key={index}

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract CoinToss {
     bool private result;
@@ -36,6 +37,29 @@ contract CoinToss {
 
     receive() external payable {
         functionCalled = 'receive';
+    }
+
+    function tossToken (bool guess, uint256 wager, address tokenAddress) public payable returns (string memory) {
+      IERC20 token = IERC20(address(tokenAddress));
+      require(token.transferFrom(msg.sender, address(this), wager));
+
+      uint256 prize = 2 * wager;
+      bool won = result == guess;
+      result = rand() % 2 == 0 ? true : false;
+      if (won) {
+        token.approve(address(this), prize);
+        bool success = token.transferFrom(address(this), msg.sender, prize);
+        require(success, "Failed to withdraw TOSS from contract.");
+        tosses.push(Toss(msg.sender, block.timestamp, wager, true));
+        emit NewToss(msg.sender, block.timestamp, wager, true);
+        console.log('you won!');
+        return "You won! Keep it up.";
+      } else {
+        tosses.push(Toss(msg.sender, block.timestamp, wager, false));
+        emit NewToss(msg.sender, block.timestamp, wager, false);
+        console.log('you lost!');
+        return "You lost! Try again.";
+      }
     }
 
     function toss (bool guess) public payable returns (string memory) {

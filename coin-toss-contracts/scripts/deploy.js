@@ -3,7 +3,7 @@ const main = async () => {
     "CoinToss"
   );
   const coinTossContract = await coinTossContractFactory.deploy({
-    value: hre.ethers.utils.parseEther("0.5"),
+    value: hre.ethers.utils.parseEther("0.1"),
   });
 
   await coinTossContract.deployed();

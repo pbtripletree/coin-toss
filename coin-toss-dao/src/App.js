@@ -15,9 +15,13 @@ const voteModule = sdk.getVoteModule(
   "0xcE92548CC0F159Cf847Bc561Ddd307deCDF5D7a8"
 );
 
+const bankAddress = "0x392C3118D6D442679250151f82b7c58E2890dffF";
+
 const App = () => {
   const { connectWallet, address, error, provider } = useWeb3();
   const [proposals, setProposals] = useState([]);
+  const [toExecute, setToExecute] = useState([]);
+  const [isExecuting, setIsExecuting] = useState(false);
   const signer = provider ? provider.getSigner() : undefined;
   const [isVoting, setIsVoting] = useState(false);
   const [isProposing, setIsProposing] = useState(false);
@@ -46,6 +50,11 @@ const App = () => {
         if (!voted) return proposal;
       })
     );
+    setToExecute(
+      proposals.filter(
+        (proposal) => proposal.state === 4 && proposal.proposer === address
+      )
+    );
     setProposals(activeProposals.filter((proposal) => proposal));
   };
 
@@ -67,6 +76,15 @@ const App = () => {
   //   }
   // }, [proposals]);
 
+  const executeProposal = async (proposalId) => {
+    setToExecute(
+      toExecute.filter((proposal) => proposal.proposalId !== proposalId)
+    );
+    setIsExecuting(true);
+    await voteModule.execute(proposalId);
+    setIsExecuting(false);
+  };
+
   const requestFillTreasury = async () => {
     const amount = 100_000;
     setIsProposing(true);
@@ -87,7 +105,7 @@ const App = () => {
             // We're doing a mint! And, we're minting to the voteModule, which is
             // acting as our treasury.
             "mint",
-            [voteModule.address, ethers.utils.parseUnits(amount.toString(), 18)]
+            [bankAddress, ethers.utils.parseUnits(amount.toString(), 18)]
           ),
           // Our token module that actually executes the mint.
           toAddress: tokenModule.address,
@@ -242,6 +260,18 @@ const App = () => {
             }
           }}
         >
+          {toExecute.map((proposal, index) => (
+            <div key={proposal.proposalId} className="card">
+              <h5>{proposal.description}</h5>
+              <button
+                className="requestButton"
+                disabled={isExecuting}
+                onClick={() => executeProposal(proposal.proposalId)}
+              >
+                Execute
+              </button>
+            </div>
+          ))}
           {proposals.map((proposal, index) => (
             <div key={proposal.proposalId} className="card">
               <h5>{proposal.description}</h5>
